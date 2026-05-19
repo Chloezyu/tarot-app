@@ -1,4 +1,4 @@
-export const lenormandCards = [
+const _cards = [
   {
     id: 1, name: "骑士", nameEn: "Rider",
     image: "/lenormand/1.骑士.jpg",
@@ -241,3 +241,5 @@ export const lenormandCards = [
     meaning: "充满活力的交流与机遇，丰富的选择摆在面前。把握商机，与人合作共赢，财源广进。",
   },
 ];
+
+export const lenormandCards = _cards.map(c => ({ ...c, image: encodeURI(c.image) }));
