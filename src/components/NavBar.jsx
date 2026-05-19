@@ -1,4 +1,4 @@
-export default function NavBar({ currentPage, onNavigate, theme, onToggleTheme }) {
+export default function NavBar({ currentPage, onNavigate, theme, onToggleTheme, showLenormand }) {
   return (
     <nav style={{
       position: "fixed",
@@ -56,7 +56,8 @@ export default function NavBar({ currentPage, onNavigate, theme, onToggleTheme }
         </button>
 
         {[
-          { key: "home", label: "抽牌" },
+          { key: "home", label: "塔罗" },
+          ...(showLenormand ? [{ key: "lenormand", label: "雷诺曼" }] : []),
           { key: "library", label: "牌库" },
         ].map((item) => (
           <div

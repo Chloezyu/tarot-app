@@ -3,6 +3,7 @@ import NavBar from "./components/NavBar";
 import HomePage from "./pages/HomePage";
 import LibraryPage from "./pages/LibraryPage";
 import CardDetailPage from "./pages/CardDetailPage";
+import LenormandPage from "./pages/LenormandPage";
 
 const fonts = `@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Noto+Serif+SC:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap');`;
 
@@ -177,9 +178,11 @@ export default function App() {
         onNavigate={navigate}
         theme={theme}
         onToggleTheme={toggleTheme}
+        showLenormand={true}
       />
 
       {page === "home" && <HomePage onNavigate={navigate} />}
+      {page === "lenormand" && <LenormandPage />}
       {page === "library" && <LibraryPage onCardSelect={openCardDetail} />}
       {page === "detail" && selectedCard && (
         <CardDetailPage card={selectedCard} onBack={() => navigate("library")} />
