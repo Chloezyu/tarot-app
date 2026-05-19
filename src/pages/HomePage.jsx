@@ -180,12 +180,12 @@ export default function HomePage() {
           textAlign: "center",
           animation: "fadeIn 1s ease",
         }}>
-          <div style={{ fontSize: 48, color: "rgba(201,169,110,0.3)", marginBottom: 24, lineHeight: 1 }}>✦</div>
+          <div style={{ fontSize: 48, color: "var(--accent-border)", marginBottom: 24, lineHeight: 1 }}>✦</div>
           <h1 style={{
             fontFamily: "'Noto Serif SC', serif",
             fontSize: "clamp(24px, 5vw, 36px)",
             fontWeight: 300,
-            color: "#E8DDD0",
+            color: "var(--text)",
             letterSpacing: "0.2em",
             marginBottom: 16,
           }}>
@@ -194,7 +194,7 @@ export default function HomePage() {
           <p style={{
             fontFamily: "'Noto Serif SC', serif",
             fontSize: 14,
-            color: "rgba(180,165,140,0.5)",
+            color: "var(--text-sub)",
             maxWidth: 360,
             lineHeight: 2,
             marginBottom: 48,
@@ -209,21 +209,21 @@ export default function HomePage() {
               fontFamily: "'Noto Serif SC', serif",
               fontSize: 14,
               letterSpacing: "0.3em",
-              color: "#C9A96E",
+              color: "var(--accent)",
               background: "transparent",
-              border: "1px solid rgba(201,169,110,0.3)",
+              border: "1px solid var(--accent-border)",
               padding: "14px 48px",
               cursor: "pointer",
               transition: "all 0.4s",
               borderRadius: 2,
             }}
             onMouseEnter={(e) => {
-              e.target.style.background = "rgba(201,169,110,0.08)";
-              e.target.style.borderColor = "rgba(201,169,110,0.6)";
+              e.target.style.background = "var(--accent-bg)";
+              e.target.style.borderColor = "var(--accent-hover-border)";
             }}
             onMouseLeave={(e) => {
               e.target.style.background = "transparent";
-              e.target.style.borderColor = "rgba(201,169,110,0.3)";
+              e.target.style.borderColor = "var(--accent-border)";
             }}
           >
             洗牌
@@ -250,8 +250,8 @@ export default function HomePage() {
                   width: 56,
                   height: 84,
                   borderRadius: 6,
-                  background: "linear-gradient(145deg, #2A2520, #1E1B16)",
-                  border: "1px solid rgba(201,169,110,0.2)",
+                  background: "var(--shuffling-bg)",
+                  border: "1px solid var(--shuffling-border)",
                   animation: `cardFloat ${0.8 + n * 0.15}s ease-in-out infinite alternate`,
                 }}
               />
@@ -260,7 +260,7 @@ export default function HomePage() {
           <p style={{
             fontFamily: "'Noto Serif SC', serif",
             fontSize: 14,
-            color: "rgba(180,165,140,0.5)",
+            color: "var(--text-sub)",
             letterSpacing: "0.2em",
             animation: "pulse 1.5s ease-in-out infinite",
           }}>
@@ -284,7 +284,7 @@ export default function HomePage() {
           <p style={{
             fontFamily: "'Noto Serif SC', serif",
             fontSize: 14,
-            color: "rgba(180,165,140,0.6)",
+            color: "var(--text-sub)",
             letterSpacing: "0.15em",
             marginBottom: 8,
             fontWeight: 300,
@@ -294,7 +294,7 @@ export default function HomePage() {
           <p style={{
             fontFamily: "'DM Sans', sans-serif",
             fontSize: 12,
-            color: "rgba(180,165,140,0.35)",
+            color: "var(--text-faint)",
             marginBottom: 28,
           }}>
             已选择 {selected.length} 张
@@ -338,7 +338,7 @@ export default function HomePage() {
               left: 0,
               right: 0,
               padding: "20px",
-              background: "linear-gradient(to top, rgba(24,21,17,0.98), rgba(24,21,17,0))",
+              background: "var(--footer-grad)",
               display: "flex",
               justifyContent: "center",
               gap: 16,
@@ -350,9 +350,9 @@ export default function HomePage() {
                 style={{
                   fontFamily: "'Noto Serif SC', serif",
                   fontSize: 13,
-                  color: "rgba(180,165,140,0.5)",
+                  color: "var(--text-sub)",
                   background: "transparent",
-                  border: "1px solid rgba(180,165,140,0.2)",
+                  border: "1px solid var(--surface-border)",
                   padding: "12px 28px",
                   cursor: "pointer",
                   borderRadius: 2,
@@ -366,8 +366,8 @@ export default function HomePage() {
                   fontFamily: "'Noto Serif SC', serif",
                   fontSize: 13,
                   letterSpacing: "0.2em",
-                  color: "#1E1B16",
-                  background: "linear-gradient(135deg, #C9A96E, #B8956A)",
+                  color: "var(--btn-primary-color)",
+                  background: "var(--btn-primary-bg)",
                   border: "none",
                   padding: "12px 36px",
                   cursor: "pointer",
@@ -396,7 +396,7 @@ export default function HomePage() {
           <p style={{
             fontFamily: "'Noto Serif SC', serif",
             fontSize: 14,
-            color: "rgba(180,165,140,0.6)",
+            color: "var(--text-sub)",
             letterSpacing: "0.15em",
             marginBottom: 4,
             fontWeight: 300,
@@ -406,7 +406,7 @@ export default function HomePage() {
           <p style={{
             fontFamily: "'Noto Serif SC', serif",
             fontSize: 12,
-            color: "rgba(180,165,140,0.35)",
+            color: "var(--text-faint)",
             letterSpacing: "0.1em",
             marginBottom: 16,
             fontWeight: 300,
@@ -422,8 +422,8 @@ export default function HomePage() {
               width: "100%",
               maxWidth: 720,
               height: 280,
-              background: "rgba(255,255,255,0.015)",
-              border: "1px solid rgba(180,165,140,0.1)",
+              background: "var(--surface)",
+              border: "1px solid var(--surface-border)",
               borderRadius: 12,
               marginBottom: 12,
               overflow: "hidden",
@@ -461,7 +461,7 @@ export default function HomePage() {
                 </div>
               );
             })}
-            {/* Badges rendered as direct table children to avoid transform escape */}
+            {/* Badges as direct table children to avoid transform escape */}
             {revealedCards.map((card, i) => {
               if (flippedCards.has(card.id)) return null;
               const pos = cardPositions[card.id] ?? { x: 20 + i * 160, y: 35 };
@@ -475,7 +475,7 @@ export default function HomePage() {
                     width: 22,
                     height: 22,
                     borderRadius: "50%",
-                    background: "#C9A96E",
+                    background: "var(--accent)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -487,7 +487,7 @@ export default function HomePage() {
                     fontFamily: "'DM Sans', sans-serif",
                     fontSize: 11,
                     fontWeight: 700,
-                    color: "#1E1B16",
+                    color: "var(--accent-on)",
                     lineHeight: 1,
                   }}>{i + 1}</span>
                 </div>
@@ -503,9 +503,9 @@ export default function HomePage() {
                 onClick={() => adjustScale(delta)}
                 style={{
                   width: 30, height: 30, borderRadius: "50%",
-                  background: "rgba(180,165,140,0.06)",
-                  border: "1px solid rgba(180,165,140,0.2)",
-                  color: "rgba(180,165,140,0.7)",
+                  background: "var(--zoom-btn-bg)",
+                  border: "1px solid var(--zoom-btn-border)",
+                  color: "var(--zoom-btn-color)",
                   fontSize: 18, cursor: "pointer",
                   display: "flex", alignItems: "center", justifyContent: "center",
                   lineHeight: 1, padding: 0,
@@ -516,7 +516,7 @@ export default function HomePage() {
 
           {/* Interpretation (collapsible, only for flipped cards) */}
           <div style={{ width: "100%", maxWidth: 720 }}>
-            {revealedCards.filter(card => flippedCards.has(card.id)).map((card, _) => {
+            {revealedCards.filter(card => flippedCards.has(card.id)).map((card) => {
               const i = revealedCards.indexOf(card);
               const isRev = reversals[card.id];
               const isExpanded = expandedCards.has(card.id);
@@ -525,8 +525,8 @@ export default function HomePage() {
                   key={card.id}
                   style={{
                     marginBottom: 8,
-                    background: "rgba(255,255,255,0.02)",
-                    border: "1px solid rgba(180,165,140,0.08)",
+                    background: "var(--surface2)",
+                    border: "1px solid var(--surface2-border)",
                     borderRadius: 4,
                   }}
                 >
@@ -543,7 +543,7 @@ export default function HomePage() {
                     <span style={{
                       fontFamily: "'DM Sans', sans-serif",
                       fontSize: 11,
-                      color: "rgba(201,169,110,0.5)",
+                      color: "var(--accent-dim)",
                       minWidth: 16,
                     }}>
                       {i + 1}
@@ -551,7 +551,7 @@ export default function HomePage() {
                     <span style={{
                       fontFamily: "'Noto Serif SC', serif",
                       fontSize: 16,
-                      color: "#E8DDD0",
+                      color: "var(--text)",
                       letterSpacing: "0.1em",
                       flex: 1,
                     }}>
@@ -560,7 +560,7 @@ export default function HomePage() {
                     <span style={{
                       fontFamily: "'DM Sans', sans-serif",
                       fontSize: 11,
-                      color: isRev ? "#B87D6A" : "#8BA88B",
+                      color: isRev ? "var(--reversed)" : "var(--upright)",
                       letterSpacing: "0.15em",
                     }}>
                       {isRev ? "逆位" : "正位"}
@@ -568,7 +568,7 @@ export default function HomePage() {
                     <span style={{
                       fontFamily: "'DM Sans', sans-serif",
                       fontSize: 11,
-                      color: "rgba(180,165,140,0.35)",
+                      color: "var(--text-faint)",
                       marginLeft: 8,
                     }}>
                       {isExpanded ? "▲" : "▼"}
@@ -583,9 +583,9 @@ export default function HomePage() {
                             style={{
                               fontFamily: "'Noto Serif SC', serif",
                               fontSize: 12,
-                              color: "rgba(201,169,110,0.7)",
+                              color: "var(--accent-kw-color)",
                               padding: "4px 12px",
-                              border: "1px solid rgba(201,169,110,0.15)",
+                              border: "1px solid var(--accent-kw-border)",
                               borderRadius: 20,
                               fontWeight: 300,
                             }}
@@ -597,7 +597,7 @@ export default function HomePage() {
                       <p style={{
                         fontFamily: "'Noto Serif SC', serif",
                         fontSize: 14,
-                        color: "rgba(220,210,195,0.75)",
+                        color: "var(--body-text)",
                         lineHeight: 2,
                         fontWeight: 300,
                         margin: 0,
@@ -617,9 +617,9 @@ export default function HomePage() {
               style={{
                 fontFamily: "'Noto Serif SC', serif",
                 fontSize: 13,
-                color: "rgba(180,165,140,0.6)",
+                color: "var(--text-sub)",
                 background: "transparent",
-                border: "1px solid rgba(180,165,140,0.2)",
+                border: "1px solid var(--surface-border)",
                 padding: "12px 32px",
                 cursor: "pointer",
                 borderRadius: 2,
@@ -634,9 +634,9 @@ export default function HomePage() {
                 fontFamily: "'Noto Serif SC', serif",
                 fontSize: 13,
                 letterSpacing: "0.15em",
-                color: "#C9A96E",
+                color: "var(--accent)",
                 background: "transparent",
-                border: "1px solid rgba(201,169,110,0.3)",
+                border: "1px solid var(--accent-border)",
                 padding: "12px 32px",
                 cursor: "pointer",
                 borderRadius: 2,

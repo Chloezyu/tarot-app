@@ -14,7 +14,7 @@ export default function CardDetailPage({ card, onBack }) {
           style={{
             fontFamily: "'Noto Serif SC', serif",
             fontSize: 13,
-            color: "rgba(180,165,140,0.5)",
+            color: "var(--text-sub)",
             background: "transparent",
             border: "none",
             cursor: "pointer",
@@ -53,7 +53,7 @@ export default function CardDetailPage({ card, onBack }) {
               fontFamily: "'Noto Serif SC', serif",
               fontSize: 28,
               fontWeight: 400,
-              color: "#E8DDD0",
+              color: "var(--text)",
               letterSpacing: "0.15em",
               marginBottom: 4,
             }}>
@@ -62,7 +62,7 @@ export default function CardDetailPage({ card, onBack }) {
             <p style={{
               fontFamily: "'Cormorant Garamond', serif",
               fontSize: 16,
-              color: "rgba(180,165,140,0.4)",
+              color: "var(--text-dim)",
               fontStyle: "italic",
             }}>
               {card.nameEn}
@@ -80,12 +80,12 @@ export default function CardDetailPage({ card, onBack }) {
         {/* Upright */}
         <div style={{ marginBottom: 40 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 3, height: 20, background: "#8BA88B", borderRadius: 2 }} />
+            <div style={{ width: 3, height: 20, background: "var(--upright)", borderRadius: 2 }} />
             <h3 style={{
               fontFamily: "'Noto Serif SC', serif",
               fontSize: 16,
               fontWeight: 400,
-              color: "#8BA88B",
+              color: "var(--upright)",
               letterSpacing: "0.15em",
             }}>
               正位
@@ -96,9 +96,9 @@ export default function CardDetailPage({ card, onBack }) {
               <span key={i} style={{
                 fontFamily: "'Noto Serif SC', serif",
                 fontSize: 12,
-                color: "rgba(139,168,139,0.8)",
+                color: "var(--upright-kw)",
                 padding: "4px 14px",
-                border: "1px solid rgba(139,168,139,0.2)",
+                border: "1px solid var(--upright-kw-border)",
                 borderRadius: 20,
                 fontWeight: 300,
               }}>
@@ -109,7 +109,7 @@ export default function CardDetailPage({ card, onBack }) {
           <p style={{
             fontFamily: "'Noto Serif SC', serif",
             fontSize: 15,
-            color: "rgba(220,210,195,0.75)",
+            color: "var(--body-text)",
             lineHeight: 2.2,
             fontWeight: 300,
           }}>
@@ -120,12 +120,12 @@ export default function CardDetailPage({ card, onBack }) {
         {/* Reversed */}
         <div style={{ marginBottom: 40 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 3, height: 20, background: "#B87D6A", borderRadius: 2 }} />
+            <div style={{ width: 3, height: 20, background: "var(--reversed)", borderRadius: 2 }} />
             <h3 style={{
               fontFamily: "'Noto Serif SC', serif",
               fontSize: 16,
               fontWeight: 400,
-              color: "#B87D6A",
+              color: "var(--reversed)",
               letterSpacing: "0.15em",
             }}>
               逆位
@@ -136,9 +136,9 @@ export default function CardDetailPage({ card, onBack }) {
               <span key={i} style={{
                 fontFamily: "'Noto Serif SC', serif",
                 fontSize: 12,
-                color: "rgba(184,125,107,0.8)",
+                color: "var(--reversed-kw)",
                 padding: "4px 14px",
-                border: "1px solid rgba(184,125,107,0.2)",
+                border: "1px solid var(--reversed-kw-border)",
                 borderRadius: 20,
                 fontWeight: 300,
               }}>
@@ -149,7 +149,7 @@ export default function CardDetailPage({ card, onBack }) {
           <p style={{
             fontFamily: "'Noto Serif SC', serif",
             fontSize: 15,
-            color: "rgba(220,210,195,0.75)",
+            color: "var(--body-text)",
             lineHeight: 2.2,
             fontWeight: 300,
           }}>

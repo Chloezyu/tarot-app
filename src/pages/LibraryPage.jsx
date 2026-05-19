@@ -27,7 +27,7 @@ export default function LibraryPage({ onCardSelect }) {
           fontFamily: "'Noto Serif SC', serif",
           fontSize: "clamp(22px, 4vw, 30px)",
           fontWeight: 300,
-          color: "#E8DDD0",
+          color: "var(--text)",
           letterSpacing: "0.2em",
           marginBottom: 8,
         }}>
@@ -36,7 +36,7 @@ export default function LibraryPage({ onCardSelect }) {
         <p style={{
           fontFamily: "'Cormorant Garamond', serif",
           fontSize: 14,
-          color: "rgba(180,165,140,0.4)",
+          color: "var(--text-dim)",
           fontStyle: "italic",
           letterSpacing: "0.1em",
         }}>
@@ -58,11 +58,11 @@ export default function LibraryPage({ onCardSelect }) {
             style={{
               fontFamily: "'Noto Serif SC', serif",
               fontSize: 12,
-              color: filter === f.key ? "#C9A96E" : "rgba(180,165,140,0.45)",
-              background: filter === f.key ? "rgba(201,169,110,0.08)" : "transparent",
+              color: filter === f.key ? "var(--accent)" : "var(--text-sub)",
+              background: filter === f.key ? "var(--accent-bg)" : "transparent",
               border: filter === f.key
-                ? "1px solid rgba(201,169,110,0.3)"
-                : "1px solid rgba(180,165,140,0.12)",
+                ? "1px solid var(--accent-border)"
+                : "1px solid var(--filter-border)",
               padding: "8px 20px",
               cursor: "pointer",
               borderRadius: 20,
@@ -104,7 +104,7 @@ export default function LibraryPage({ onCardSelect }) {
             <span style={{
               fontFamily: "'Noto Serif SC', serif",
               fontSize: 11,
-              color: "rgba(180,165,140,0.6)",
+              color: "var(--text-sub)",
               textAlign: "center",
               fontWeight: 300,
             }}>

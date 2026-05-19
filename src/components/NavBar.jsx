@@ -1,4 +1,4 @@
-export default function NavBar({ currentPage, onNavigate }) {
+export default function NavBar({ currentPage, onNavigate, theme, onToggleTheme }) {
   return (
     <nav style={{
       position: "fixed",
@@ -6,9 +6,9 @@ export default function NavBar({ currentPage, onNavigate }) {
       left: 0,
       right: 0,
       height: 60,
-      background: "rgba(24,21,17,0.92)",
+      background: "var(--nav-bg)",
       backdropFilter: "blur(20px)",
-      borderBottom: "1px solid rgba(201,169,110,0.1)",
+      borderBottom: "1px solid var(--nav-border)",
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
@@ -21,14 +21,40 @@ export default function NavBar({ currentPage, onNavigate }) {
           fontFamily: "'Cormorant Garamond', serif",
           fontSize: 20,
           fontWeight: 500,
-          color: "#C9A96E",
+          color: "var(--accent)",
           cursor: "pointer",
           letterSpacing: "0.12em",
         }}
       >
         ARCANA
       </div>
-      <div style={{ display: "flex", gap: 32 }}>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+        <button
+          onClick={onToggleTheme}
+          title={theme === "dark" ? "切换至亮色模式" : "切换至暗色模式"}
+          style={{
+            width: 32,
+            height: 32,
+            borderRadius: "50%",
+            background: "var(--toggle-bg)",
+            border: "1px solid var(--toggle-border)",
+            color: "var(--toggle-color)",
+            fontSize: 13,
+            fontFamily: "'Noto Serif SC', serif",
+            letterSpacing: 0,
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            lineHeight: 1,
+            padding: 0,
+            transition: "all 0.3s",
+          }}
+        >
+          {theme === "dark" ? "亮" : "暗"}
+        </button>
+
         {[
           { key: "home", label: "抽牌" },
           { key: "library", label: "牌库" },
@@ -39,7 +65,7 @@ export default function NavBar({ currentPage, onNavigate }) {
             style={{
               fontFamily: "'Noto Serif SC', serif",
               fontSize: 13,
-              color: currentPage === item.key ? "#C9A96E" : "rgba(180,165,140,0.6)",
+              color: currentPage === item.key ? "var(--accent)" : "var(--text-sub)",
               cursor: "pointer",
               letterSpacing: "0.15em",
               transition: "color 0.3s",
