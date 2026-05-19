@@ -470,8 +470,8 @@ export default function HomePage() {
                   key={`badge-${card.id}`}
                   style={{
                     position: "absolute",
-                    left: pos.x + 140 * cardScale - 28,
-                    top: pos.y + 6,
+                    left: pos.x + 12,
+                    top: pos.y + 12,
                     width: 22,
                     height: 22,
                     borderRadius: "50%",
