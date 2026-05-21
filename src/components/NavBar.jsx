@@ -58,6 +58,7 @@ export default function NavBar({ currentPage, onNavigate, theme, onToggleTheme, 
         {[
           { key: "home", label: "塔罗" },
           ...(showLenormand ? [{ key: "lenormand", label: "雷诺曼" }] : []),
+          { key: "spreads", label: "牌阵" },
           { key: "library", label: "牌库" },
         ].map((item) => (
           <div
