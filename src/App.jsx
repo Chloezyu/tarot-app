@@ -197,6 +197,31 @@ export default function App() {
       {page === "detail" && selectedCard && (
         <CardDetailPage card={selectedCard} onBack={() => navigate("library")} />
       )}
+
+      <footer style={{
+        padding: "28px 20px 32px",
+        textAlign: "center",
+        borderTop: "1px solid var(--surface-border)",
+      }}>
+        <p style={{
+          fontFamily: "'Cormorant Garamond', serif",
+          fontSize: 13,
+          color: "var(--text-faint)",
+          letterSpacing: "0.2em",
+          marginBottom: 8,
+        }}>
+          ZyuStudio
+        </p>
+        <p style={{
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 12,
+          color: "var(--text-faint)",
+          letterSpacing: "0.05em",
+          lineHeight: 1.8,
+        }}>
+          微信 zyu967 · zyustudio@163.com
+        </p>
+      </footer>
     </div>
   );
 }

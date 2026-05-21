@@ -19,14 +19,14 @@ export default function NavBar({ currentPage, onNavigate, theme, onToggleTheme, 
         onClick={() => onNavigate("home")}
         style={{
           fontFamily: "'Cormorant Garamond', serif",
-          fontSize: "clamp(16px, 5vw, 20px)",
+          fontSize: "clamp(14px, 4.5vw, 20px)",
           fontWeight: 500,
           color: "var(--accent)",
           cursor: "pointer",
-          letterSpacing: "0.12em",
+          letterSpacing: "0.08em",
         }}
       >
-        ARCANA
+        ZyuStudio
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: "clamp(10px, 2.5vw, 24px)" }}>
