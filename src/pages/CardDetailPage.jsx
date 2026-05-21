@@ -2,9 +2,18 @@ import { suitInfo } from "../data/tarotCards";
 import CardFace from "../components/CardFace";
 
 export default function CardDetailPage({ card, onBack }) {
-  const suitColor = card.suit ? suitInfo[card.suit].color : "#C9A96E";
-  const suitName = card.suit ? suitInfo[card.suit].name : "大阿尔卡纳";
-  const suitElement = card.suit ? suitInfo[card.suit].element : null;
+  const isLenormand = "meaning" in card;
+
+  const suitColor = isLenormand
+    ? "#C9A96E"
+    : (card.suit ? suitInfo[card.suit].color : "#C9A96E");
+  const deckLabel = isLenormand
+    ? "雷诺曼"
+    : (card.suit ? suitInfo[card.suit].name : "大阿尔卡纳");
+  const suitElement = isLenormand
+    ? null
+    : (card.suit ? suitInfo[card.suit].element : null);
+  const cardNumber = isLenormand ? `No.${card.id}` : card.number;
 
   return (
     <div style={{ minHeight: "100vh", paddingTop: 60, animation: "fadeIn 0.5s ease" }}>
@@ -47,7 +56,7 @@ export default function CardDetailPage({ card, onBack }) {
               marginBottom: 8,
               opacity: 0.7,
             }}>
-              {suitName}{suitElement ? ` · ${suitElement}` : ""} · {card.number}
+              {deckLabel}{suitElement ? ` · ${suitElement}` : ""} · {cardNumber}
             </div>
             <h1 style={{
               fontFamily: "'Noto Serif SC', serif",
@@ -77,85 +86,128 @@ export default function CardDetailPage({ card, onBack }) {
           margin: "0 auto 40px",
         }} />
 
-        {/* Upright */}
-        <div style={{ marginBottom: 40 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 3, height: 20, background: "var(--upright)", borderRadius: 2 }} />
-            <h3 style={{
-              fontFamily: "'Noto Serif SC', serif",
-              fontSize: 16,
-              fontWeight: 400,
-              color: "var(--upright)",
-              letterSpacing: "0.15em",
-            }}>
-              正位
-            </h3>
-          </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-            {card.uprightKeywords.map((kw, i) => (
-              <span key={i} style={{
+        {isLenormand ? (
+          /* Lenormand: single meaning section, no reversal */
+          <div style={{ marginBottom: 40 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+              <div style={{ width: 3, height: 20, background: "var(--accent-dim)", borderRadius: 2 }} />
+              <h3 style={{
                 fontFamily: "'Noto Serif SC', serif",
-                fontSize: 12,
-                color: "var(--upright-kw)",
-                padding: "4px 14px",
-                border: "1px solid var(--upright-kw-border)",
-                borderRadius: 20,
+                fontSize: 16,
+                fontWeight: 400,
+                color: "var(--accent)",
+                letterSpacing: "0.15em",
+              }}>
+                含义
+              </h3>
+            </div>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+              {card.keywords.map((kw, i) => (
+                <span key={i} style={{
+                  fontFamily: "'Noto Serif SC', serif",
+                  fontSize: 12,
+                  color: "var(--accent-kw-color)",
+                  padding: "4px 14px",
+                  border: "1px solid var(--accent-kw-border)",
+                  borderRadius: 20,
+                  fontWeight: 300,
+                }}>
+                  {kw}
+                </span>
+              ))}
+            </div>
+            <p style={{
+              fontFamily: "'Noto Serif SC', serif",
+              fontSize: 15,
+              color: "var(--body-text)",
+              lineHeight: 2.2,
+              fontWeight: 300,
+            }}>
+              {card.meaning}
+            </p>
+          </div>
+        ) : (
+          /* Tarot: upright + reversed */
+          <>
+            <div style={{ marginBottom: 40 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                <div style={{ width: 3, height: 20, background: "var(--upright)", borderRadius: 2 }} />
+                <h3 style={{
+                  fontFamily: "'Noto Serif SC', serif",
+                  fontSize: 16,
+                  fontWeight: 400,
+                  color: "var(--upright)",
+                  letterSpacing: "0.15em",
+                }}>
+                  正位
+                </h3>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                {card.uprightKeywords.map((kw, i) => (
+                  <span key={i} style={{
+                    fontFamily: "'Noto Serif SC', serif",
+                    fontSize: 12,
+                    color: "var(--upright-kw)",
+                    padding: "4px 14px",
+                    border: "1px solid var(--upright-kw-border)",
+                    borderRadius: 20,
+                    fontWeight: 300,
+                  }}>
+                    {kw}
+                  </span>
+                ))}
+              </div>
+              <p style={{
+                fontFamily: "'Noto Serif SC', serif",
+                fontSize: 15,
+                color: "var(--body-text)",
+                lineHeight: 2.2,
                 fontWeight: 300,
               }}>
-                {kw}
-              </span>
-            ))}
-          </div>
-          <p style={{
-            fontFamily: "'Noto Serif SC', serif",
-            fontSize: 15,
-            color: "var(--body-text)",
-            lineHeight: 2.2,
-            fontWeight: 300,
-          }}>
-            {card.uprightMeaning}
-          </p>
-        </div>
+                {card.uprightMeaning}
+              </p>
+            </div>
 
-        {/* Reversed */}
-        <div style={{ marginBottom: 40 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-            <div style={{ width: 3, height: 20, background: "var(--reversed)", borderRadius: 2 }} />
-            <h3 style={{
-              fontFamily: "'Noto Serif SC', serif",
-              fontSize: 16,
-              fontWeight: 400,
-              color: "var(--reversed)",
-              letterSpacing: "0.15em",
-            }}>
-              逆位
-            </h3>
-          </div>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
-            {card.reversedKeywords.map((kw, i) => (
-              <span key={i} style={{
+            <div style={{ marginBottom: 40 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                <div style={{ width: 3, height: 20, background: "var(--reversed)", borderRadius: 2 }} />
+                <h3 style={{
+                  fontFamily: "'Noto Serif SC', serif",
+                  fontSize: 16,
+                  fontWeight: 400,
+                  color: "var(--reversed)",
+                  letterSpacing: "0.15em",
+                }}>
+                  逆位
+                </h3>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                {card.reversedKeywords.map((kw, i) => (
+                  <span key={i} style={{
+                    fontFamily: "'Noto Serif SC', serif",
+                    fontSize: 12,
+                    color: "var(--reversed-kw)",
+                    padding: "4px 14px",
+                    border: "1px solid var(--reversed-kw-border)",
+                    borderRadius: 20,
+                    fontWeight: 300,
+                  }}>
+                    {kw}
+                  </span>
+                ))}
+              </div>
+              <p style={{
                 fontFamily: "'Noto Serif SC', serif",
-                fontSize: 12,
-                color: "var(--reversed-kw)",
-                padding: "4px 14px",
-                border: "1px solid var(--reversed-kw-border)",
-                borderRadius: 20,
+                fontSize: 15,
+                color: "var(--body-text)",
+                lineHeight: 2.2,
                 fontWeight: 300,
               }}>
-                {kw}
-              </span>
-            ))}
-          </div>
-          <p style={{
-            fontFamily: "'Noto Serif SC', serif",
-            fontSize: 15,
-            color: "var(--body-text)",
-            lineHeight: 2.2,
-            fontWeight: 300,
-          }}>
-            {card.reversedMeaning}
-          </p>
-        </div>
+                {card.reversedMeaning}
+              </p>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
