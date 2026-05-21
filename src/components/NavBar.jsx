@@ -19,7 +19,7 @@ export default function NavBar({ currentPage, onNavigate, theme, onToggleTheme, 
         onClick={() => onNavigate("home")}
         style={{
           fontFamily: "'Cormorant Garamond', serif",
-          fontSize: 20,
+          fontSize: "clamp(16px, 5vw, 20px)",
           fontWeight: 500,
           color: "var(--accent)",
           cursor: "pointer",
@@ -29,7 +29,7 @@ export default function NavBar({ currentPage, onNavigate, theme, onToggleTheme, 
         ARCANA
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "clamp(10px, 2.5vw, 24px)" }}>
         <button
           onClick={onToggleTheme}
           title={theme === "dark" ? "切换至亮色模式" : "切换至暗色模式"}

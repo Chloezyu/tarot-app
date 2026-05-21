@@ -7,6 +7,46 @@ import FlipCard from "../components/FlipCard";
 const CARD_W = 140;
 const CARD_H = 210;
 
+function computeAdaptiveScale(spread, tableSize) {
+  if (!spread) return 1;
+  const base = spread.initialScale ?? 1;
+  const pos = spread.positions;
+  let maxScale = base;
+  for (let i = 0; i < pos.length; i++) {
+    for (let j = i + 1; j < pos.length; j++) {
+      const dx = Math.abs(pos[i].cx - pos[j].cx);
+      const dy = Math.abs(pos[i].cy - pos[j].cy);
+      if (dx > 0.02) maxScale = Math.min(maxScale, (dx * tableSize - 8) / CARD_W);
+      if (dy > 0.02) maxScale = Math.min(maxScale, (dy * tableSize - 8) / CARD_H);
+    }
+  }
+  return Math.max(0.3, maxScale);
+}
+
+function computeLayout(cards, spread, tableSize) {
+  const scale = computeAdaptiveScale(spread, tableSize);
+  const positions = {};
+  if (spread) {
+    cards.forEach((card, i) => {
+      const p = spread.positions[i];
+      positions[card.id] = {
+        x: Math.max(0, p.cx * tableSize - (CARD_W * scale) / 2),
+        y: Math.max(0, p.cy * tableSize - (CARD_H * scale) / 2),
+      };
+    });
+  } else {
+    const n = cards.length;
+    const spacing = n > 1 ? Math.min((tableSize - 40 - CARD_W) / (n - 1), 200) : 0;
+    const totalW = (n - 1) * spacing + CARD_W;
+    const startX = Math.max(20, (tableSize - totalW) / 2);
+    const startY = Math.max(20, (tableSize - CARD_H) / 2);
+    cards.forEach((card, i) => {
+      positions[card.id] = { x: startX + i * spacing, y: startY };
+    });
+  }
+  return { positions, scale };
+}
+
 export default function LenormandPage({ spread: spreadProp }) {
   const [phase, setPhase] = useState("welcome");
   const [system, setSystem] = useState(36);
@@ -28,32 +68,25 @@ export default function LenormandPage({ spread: spreadProp }) {
   useEffect(() => {
     if (phase !== "result" || drawnCards.length === 0 || !tableRef.current) return;
     const size = tableRef.current.offsetWidth;
-    const scale = activeSpread?.initialScale ?? 1;
-    const positions = {};
-    if (activeSpread) {
-      drawnCards.forEach((card, i) => {
-        const pos = activeSpread.positions[i];
-        positions[card.id] = {
-          x: Math.max(0, pos.cx * size - (CARD_W * scale) / 2),
-          y: Math.max(0, pos.cy * size - (CARD_H * scale) / 2),
-        };
-      });
-    } else {
-      const n = drawnCards.length;
-      const spacing = n > 1 ? Math.min((size - 40 - CARD_W) / (n - 1), 200) : 0;
-      const totalW = (n - 1) * spacing + CARD_W;
-      const startX = Math.max(20, (size - totalW) / 2);
-      const startY = Math.max(20, (size - CARD_H) / 2);
-      drawnCards.forEach((card, i) => {
-        positions[card.id] = { x: startX + i * spacing, y: startY };
-      });
-    }
+    const { positions, scale } = computeLayout(drawnCards, activeSpread, size);
     setCardPositions(positions);
+    setCardScale(scale);
     setFlippedCards(new Set());
     setExpandedCards(new Set());
     setActiveCardId(null);
-    setCardScale(scale);
   }, [phase, drawnCards]);
+
+  useEffect(() => {
+    if (phase !== "result" || drawnCards.length === 0 || !tableRef.current) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const size = entry.contentRect.width;
+      const { positions, scale } = computeLayout(drawnCards, activeSpread, size);
+      setCardPositions(positions);
+      setCardScale(scale);
+    });
+    observer.observe(tableRef.current);
+    return () => observer.disconnect();
+  }, [phase, drawnCards, activeSpread]);
 
   const onCardPointerDown = (e, cardId) => {
     e.preventDefault();
@@ -585,7 +618,7 @@ export default function LenormandPage({ spread: spreadProp }) {
               <div style={{
                 position: "fixed",
                 bottom: 0, left: 0, right: 0,
-                padding: "20px",
+                padding: "16px 20px max(16px, env(safe-area-inset-bottom))",
                 background: "var(--footer-grad)",
                 display: "flex",
                 justifyContent: "center",
@@ -614,7 +647,7 @@ export default function LenormandPage({ spread: spreadProp }) {
               <div style={{
                 position: "fixed",
                 bottom: 0, left: 0, right: 0,
-                padding: "20px",
+                padding: "16px 20px max(16px, env(safe-area-inset-bottom))",
                 background: "var(--footer-grad)",
                 display: "flex",
                 justifyContent: "center",
