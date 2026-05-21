@@ -4,6 +4,7 @@ import HomePage from "./pages/HomePage";
 import LibraryPage from "./pages/LibraryPage";
 import CardDetailPage from "./pages/CardDetailPage";
 import LenormandPage from "./pages/LenormandPage";
+import SpreadLibraryPage from "./pages/SpreadLibraryPage";
 
 const fonts = `@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Noto+Serif+SC:wght@300;400;500;600&family=DM+Sans:wght@300;400;500&display=swap');`;
 
@@ -145,6 +146,7 @@ const globalStyles = `
 export default function App() {
   const [page, setPage] = useState("home");
   const [selectedCard, setSelectedCard] = useState(null);
+  const [selectedSpread, setSelectedSpread] = useState(null);
   const [theme, setTheme] = useState("dark");
 
   useEffect(() => {
@@ -156,6 +158,13 @@ export default function App() {
   const navigate = (p) => {
     setPage(p);
     setSelectedCard(null);
+    setSelectedSpread(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const startSpreadReading = (spread) => {
+    setSelectedSpread(spread);
+    setPage(spread.deck === "lenormand" ? "lenormand" : "home");
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -181,9 +190,10 @@ export default function App() {
         showLenormand={true}
       />
 
-      {page === "home" && <HomePage onNavigate={navigate} />}
-      {page === "lenormand" && <LenormandPage />}
+      {page === "home" && <HomePage key={selectedSpread?.id ?? "free"} onNavigate={navigate} spread={selectedSpread} />}
+      {page === "lenormand" && <LenormandPage key={selectedSpread?.id ?? "free"} spread={selectedSpread} />}
       {page === "library" && <LibraryPage onCardSelect={openCardDetail} />}
+      {page === "spreads" && <SpreadLibraryPage onStartSpread={startSpreadReading} />}
       {page === "detail" && selectedCard && (
         <CardDetailPage card={selectedCard} onBack={() => navigate("library")} />
       )}

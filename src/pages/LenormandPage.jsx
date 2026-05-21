@@ -1,12 +1,13 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { lenormandCards } from "../data/lenormandCards";
+import { spreads, lenormandCategories } from "../data/spreads";
 import CardBack from "../components/CardBack";
 import FlipCard from "../components/FlipCard";
 
 const CARD_W = 140;
 const CARD_H = 210;
 
-export default function LenormandPage() {
+export default function LenormandPage({ spread: spreadProp }) {
   const [phase, setPhase] = useState("welcome");
   const [system, setSystem] = useState(36);
   const [shuffledDeck, setShuffledDeck] = useState([]);
@@ -17,26 +18,41 @@ export default function LenormandPage() {
   const [expandedCards, setExpandedCards] = useState(new Set());
   const [activeCardId, setActiveCardId] = useState(null);
   const [cardScale, setCardScale] = useState(1);
+  const [activeSpread, setActiveSpread] = useState(spreadProp ?? null);
+  const [showSpreadModal, setShowSpreadModal] = useState(false);
   const tableRef = useRef(null);
   const draggingRef = useRef(null);
+
+  const lenormandSpreads = spreads.filter(s => s.deck === "lenormand");
 
   useEffect(() => {
     if (phase !== "result" || drawnCards.length === 0 || !tableRef.current) return;
     const size = tableRef.current.offsetWidth;
-    const n = drawnCards.length;
-    const spacing = n > 1 ? Math.min((size - 40 - CARD_W) / (n - 1), 200) : 0;
-    const totalW = (n - 1) * spacing + CARD_W;
-    const startX = Math.max(20, (size - totalW) / 2);
-    const startY = Math.max(20, (size - CARD_H) / 2);
+    const scale = activeSpread?.initialScale ?? 1;
     const positions = {};
-    drawnCards.forEach((card, i) => {
-      positions[card.id] = { x: startX + i * spacing, y: startY };
-    });
+    if (activeSpread) {
+      drawnCards.forEach((card, i) => {
+        const pos = activeSpread.positions[i];
+        positions[card.id] = {
+          x: Math.max(0, pos.cx * size - (CARD_W * scale) / 2),
+          y: Math.max(0, pos.cy * size - (CARD_H * scale) / 2),
+        };
+      });
+    } else {
+      const n = drawnCards.length;
+      const spacing = n > 1 ? Math.min((size - 40 - CARD_W) / (n - 1), 200) : 0;
+      const totalW = (n - 1) * spacing + CARD_W;
+      const startX = Math.max(20, (size - totalW) / 2);
+      const startY = Math.max(20, (size - CARD_H) / 2);
+      drawnCards.forEach((card, i) => {
+        positions[card.id] = { x: startX + i * spacing, y: startY };
+      });
+    }
     setCardPositions(positions);
     setFlippedCards(new Set());
     setExpandedCards(new Set());
     setActiveCardId(null);
-    setCardScale(1);
+    setCardScale(scale);
   }, [phase, drawnCards]);
 
   const onCardPointerDown = (e, cardId) => {
@@ -106,7 +122,8 @@ export default function LenormandPage() {
     setCardScale(newScale);
   };
 
-  const shuffle = useCallback(() => {
+  const shuffle = useCallback((spreadOverride) => {
+    const currentSpread = spreadOverride !== undefined ? spreadOverride : activeSpread;
     setPhase("shuffling");
     setSelected([]);
     setDrawnCards([]);
@@ -122,10 +139,29 @@ export default function LenormandPage() {
       setShuffledDeck(deck);
       setPhase("selecting");
     }, 1800);
-  }, [system]);
+  }, [system, activeSpread]);
+
+  const applySpread = (s) => {
+    setActiveSpread(s);
+    setSelected([]);
+    setShowSpreadModal(false);
+    shuffle(s);
+  };
 
   const toggleCard = (index) => {
     if (phase !== "selecting") return;
+    if (activeSpread) {
+      if (selected.includes(index) || selected.length >= activeSpread.cardCount) return;
+      const next = [...selected, index];
+      setSelected(next);
+      if (next.length === activeSpread.cardCount) {
+        setTimeout(() => {
+          setDrawnCards(next.map(i => shuffledDeck[i]));
+          setPhase("result");
+        }, 200);
+      }
+      return;
+    }
     if (selected.includes(index)) {
       setSelected(selected.filter(i => i !== index));
     } else {
@@ -168,6 +204,122 @@ export default function LenormandPage() {
       alignItems: "center",
     }}>
 
+      {/* Spread Modal */}
+      {showSpreadModal && (
+        <div
+          onClick={() => setShowSpreadModal(false)}
+          style={{
+            position: "fixed", inset: 0,
+            background: "rgba(0,0,0,0.6)",
+            zIndex: 100,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 500,
+              maxHeight: "80vh",
+              background: "var(--bg-body)",
+              border: "1px solid var(--surface-border)",
+              borderRadius: "12px 12px 0 0",
+              overflowY: "auto",
+              padding: "20px 20px 40px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <span style={{
+                fontFamily: "'Noto Serif SC', serif",
+                fontSize: 14,
+                color: "var(--text)",
+                letterSpacing: "0.15em",
+              }}>
+                选择牌阵
+              </span>
+              <button
+                onClick={() => setShowSpreadModal(false)}
+                style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 18,
+                  color: "var(--text-faint)",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  lineHeight: 1,
+                  padding: 4,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            <div style={{ padding: "0 0 16px" }}>
+              {lenormandCategories.map(cat => {
+                const catSpreads = lenormandSpreads.filter(s => s.category === cat);
+                if (catSpreads.length === 0) return null;
+                return (
+                  <div key={cat} style={{ marginBottom: 20 }}>
+                    <div style={{
+                      fontFamily: "'Noto Serif SC', serif",
+                      fontSize: 11,
+                      color: "var(--text-faint)",
+                      letterSpacing: "0.25em",
+                      marginBottom: 10,
+                    }}>
+                      {cat}
+                    </div>
+                    {catSpreads.map(s => (
+                      <div
+                        key={s.id}
+                        onClick={() => applySpread(s)}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          padding: "14px 16px",
+                          marginBottom: 8,
+                          background: activeSpread?.id === s.id ? "var(--accent-bg)" : "var(--surface)",
+                          border: activeSpread?.id === s.id ? "1px solid var(--accent-border)" : "1px solid var(--surface-border)",
+                          borderRadius: 6,
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                        }}
+                      >
+                        <div>
+                          <div style={{
+                            fontFamily: "'Noto Serif SC', serif",
+                            fontSize: 14,
+                            color: "var(--text)",
+                            letterSpacing: "0.1em",
+                            marginBottom: 3,
+                          }}>
+                            {s.name}
+                          </div>
+                          <div style={{
+                            fontFamily: "'Noto Serif SC', serif",
+                            fontSize: 11,
+                            color: "var(--text-faint)",
+                            fontWeight: 300,
+                          }}>
+                            {s.cardCount} 张 · {s.nameEn}
+                          </div>
+                        </div>
+                        {activeSpread?.id === s.id && (
+                          <span style={{ color: "var(--accent)", fontSize: 14 }}>✓</span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Welcome Phase */}
       {phase === "welcome" && (
         <div style={{
@@ -190,7 +342,7 @@ export default function LenormandPage() {
             letterSpacing: "0.2em",
             marginBottom: 8,
           }}>
-            雷诺曼占卜
+            {activeSpread ? activeSpread.name : "雷诺曼占卜"}
           </h2>
           <p style={{
             fontFamily: "'Cormorant Garamond', serif",
@@ -198,10 +350,24 @@ export default function LenormandPage() {
             color: "var(--text-dim)",
             fontStyle: "italic",
             letterSpacing: "0.1em",
-            marginBottom: 48,
+            marginBottom: activeSpread ? 20 : 48,
           }}>
-            Lenormand Oracle
+            {activeSpread ? activeSpread.nameEn : "Lenormand Oracle"}
           </p>
+
+          {activeSpread && (
+            <p style={{
+              fontFamily: "'Noto Serif SC', serif",
+              fontSize: 13,
+              color: "var(--text-sub)",
+              lineHeight: 2,
+              fontWeight: 300,
+              maxWidth: 340,
+              marginBottom: 40,
+            }}>
+              {activeSpread.description}
+            </p>
+          )}
 
           <div style={{ marginBottom: 48 }}>
             <p style={{
@@ -240,7 +406,7 @@ export default function LenormandPage() {
           </div>
 
           <button
-            onClick={shuffle}
+            onClick={() => shuffle()}
             style={{
               fontFamily: "'Noto Serif SC', serif",
               fontSize: 14,
@@ -314,24 +480,77 @@ export default function LenormandPage() {
           width: "100%",
           maxWidth: 900,
         }}>
-          <p style={{
-            fontFamily: "'Noto Serif SC', serif",
-            fontSize: 14,
-            color: "var(--text-sub)",
-            letterSpacing: "0.15em",
-            marginBottom: 8,
-            fontWeight: 300,
-          }}>
-            凭直觉选择你想抽取的牌
-          </p>
-          <p style={{
-            fontFamily: "'DM Sans', sans-serif",
-            fontSize: 12,
-            color: "var(--text-faint)",
-            marginBottom: 28,
-          }}>
-            已选择 {selected.length} 张
-          </p>
+          {activeSpread ? (
+            <>
+              <p style={{
+                fontFamily: "'Noto Serif SC', serif",
+                fontSize: 14,
+                color: "var(--text-sub)",
+                letterSpacing: "0.15em",
+                marginBottom: 6,
+                fontWeight: 300,
+              }}>
+                第 {selected.length + 1} 张 / {activeSpread.cardCount}
+                {" · "}
+                <span style={{ color: "var(--accent)" }}>{activeSpread.positions[selected.length]?.badge}</span>
+              </p>
+              <p style={{
+                fontFamily: "'Noto Serif SC', serif",
+                fontSize: 12,
+                color: "var(--text-faint)",
+                letterSpacing: "0.1em",
+                marginBottom: 28,
+                fontWeight: 300,
+              }}>
+                {activeSpread.positions[selected.length]?.label}
+              </p>
+            </>
+          ) : (
+            <>
+              <p style={{
+                fontFamily: "'Noto Serif SC', serif",
+                fontSize: 14,
+                color: "var(--text-sub)",
+                letterSpacing: "0.15em",
+                marginBottom: 8,
+                fontWeight: 300,
+              }}>
+                凭直觉选择你想抽取的牌
+              </p>
+              <p style={{
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: 12,
+                color: "var(--text-faint)",
+                marginBottom: 16,
+              }}>
+                已选择 {selected.length} 张
+              </p>
+              <button
+                onClick={() => setShowSpreadModal(true)}
+                style={{
+                  fontFamily: "'Noto Serif SC', serif",
+                  fontSize: 12,
+                  letterSpacing: "0.15em",
+                  color: "var(--accent)",
+                  background: "transparent",
+                  border: "1px solid var(--accent-border)",
+                  padding: "8px 20px",
+                  cursor: "pointer",
+                  borderRadius: 2,
+                  marginBottom: 24,
+                  transition: "all 0.3s",
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = "var(--accent-bg)";
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.background = "transparent";
+                }}
+              >
+                牌阵
+              </button>
+            </>
+          )}
 
           <div style={{
             display: "grid",
@@ -361,53 +580,82 @@ export default function LenormandPage() {
             ))}
           </div>
 
-          {selected.length > 0 && (
-            <div style={{
-              position: "fixed",
-              bottom: 0,
-              left: 0,
-              right: 0,
-              padding: "20px",
-              background: "var(--footer-grad)",
-              display: "flex",
-              justifyContent: "center",
-              gap: 16,
-              animation: "fadeIn 0.3s ease",
-              zIndex: 50,
-            }}>
-              <button
-                onClick={() => setSelected([])}
-                style={{
-                  fontFamily: "'Noto Serif SC', serif",
-                  fontSize: 13,
-                  color: "var(--text-sub)",
-                  background: "transparent",
-                  border: "1px solid var(--surface-border)",
-                  padding: "12px 28px",
-                  cursor: "pointer",
-                  borderRadius: 2,
-                }}
-              >
-                清除
-              </button>
-              <button
-                onClick={revealCards}
-                style={{
-                  fontFamily: "'Noto Serif SC', serif",
-                  fontSize: 13,
-                  letterSpacing: "0.2em",
-                  color: "var(--btn-primary-color)",
-                  background: "var(--btn-primary-bg)",
-                  border: "none",
-                  padding: "12px 36px",
-                  cursor: "pointer",
-                  borderRadius: 2,
-                  fontWeight: 500,
-                }}
-              >
-                翻牌 ({selected.length})
-              </button>
-            </div>
+          {activeSpread ? (
+            selected.length > 0 && (
+              <div style={{
+                position: "fixed",
+                bottom: 0, left: 0, right: 0,
+                padding: "20px",
+                background: "var(--footer-grad)",
+                display: "flex",
+                justifyContent: "center",
+                animation: "fadeIn 0.3s ease",
+                zIndex: 50,
+              }}>
+                <button
+                  onClick={() => setSelected([])}
+                  style={{
+                    fontFamily: "'Noto Serif SC', serif",
+                    fontSize: 13,
+                    color: "var(--text-sub)",
+                    background: "transparent",
+                    border: "1px solid var(--surface-border)",
+                    padding: "12px 28px",
+                    cursor: "pointer",
+                    borderRadius: 2,
+                  }}
+                >
+                  重新选牌
+                </button>
+              </div>
+            )
+          ) : (
+            selected.length > 0 && (
+              <div style={{
+                position: "fixed",
+                bottom: 0, left: 0, right: 0,
+                padding: "20px",
+                background: "var(--footer-grad)",
+                display: "flex",
+                justifyContent: "center",
+                gap: 16,
+                animation: "fadeIn 0.3s ease",
+                zIndex: 50,
+              }}>
+                <button
+                  onClick={() => setSelected([])}
+                  style={{
+                    fontFamily: "'Noto Serif SC', serif",
+                    fontSize: 13,
+                    color: "var(--text-sub)",
+                    background: "transparent",
+                    border: "1px solid var(--surface-border)",
+                    padding: "12px 28px",
+                    cursor: "pointer",
+                    borderRadius: 2,
+                  }}
+                >
+                  清除
+                </button>
+                <button
+                  onClick={revealCards}
+                  style={{
+                    fontFamily: "'Noto Serif SC', serif",
+                    fontSize: 13,
+                    letterSpacing: "0.2em",
+                    color: "var(--btn-primary-color)",
+                    background: "var(--btn-primary-bg)",
+                    border: "none",
+                    padding: "12px 36px",
+                    cursor: "pointer",
+                    borderRadius: 2,
+                    fontWeight: 500,
+                  }}
+                >
+                  翻牌 ({selected.length})
+                </button>
+              </div>
+            )
           )}
         </div>
       )}
@@ -431,7 +679,9 @@ export default function LenormandPage() {
             marginBottom: 4,
             fontWeight: 300,
           }}>
-            {system} 张体系 · 抽取 {drawnCards.length} 张
+            {activeSpread
+              ? `${activeSpread.name} · ${activeSpread.cardCount} 张`
+              : `${system} 张体系 · 抽取 ${drawnCards.length} 张`}
           </p>
           <p style={{
             fontFamily: "'Noto Serif SC', serif",
@@ -444,7 +694,6 @@ export default function LenormandPage() {
             点击牌面翻牌 · 拖拽移动位置
           </p>
 
-          {/* Square Card Table */}
           <div
             ref={tableRef}
             style={{
@@ -492,41 +741,42 @@ export default function LenormandPage() {
               );
             })}
 
-            {/* Sequence badges — siblings of cards to avoid transform issues */}
             {drawnCards.map((card, i) => {
               if (flippedCards.has(card.id)) return null;
               const pos = cardPositions[card.id] ?? { x: 20 + i * 160, y: 35 };
+              const badge = activeSpread ? activeSpread.positions[i]?.badge : i + 1;
               return (
                 <div
                   key={`badge-${card.id}`}
                   style={{
                     position: "absolute",
-                    left: pos.x + 12,
-                    top: pos.y + 12,
-                    width: 22,
+                    left: pos.x + 4,
+                    top: pos.y + 4,
+                    minWidth: 22,
                     height: 22,
-                    borderRadius: "50%",
+                    borderRadius: 11,
                     background: "var(--accent)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    padding: "0 5px",
                     zIndex: 20,
                     pointerEvents: "none",
                   }}
                 >
                   <span style={{
-                    fontFamily: "'DM Sans', sans-serif",
-                    fontSize: 11,
+                    fontFamily: "'Noto Serif SC', sans-serif",
+                    fontSize: activeSpread ? 8 : 11,
                     fontWeight: 700,
                     color: "var(--accent-on)",
                     lineHeight: 1,
-                  }}>{i + 1}</span>
+                    whiteSpace: "nowrap",
+                  }}>{badge}</span>
                 </div>
               );
             })}
           </div>
 
-          {/* Zoom controls */}
           <div style={{ display: "flex", gap: 8, marginTop: 10, marginBottom: 16, alignItems: "center" }}>
             {[["−", -0.15], ["+", 0.15]].map(([label, delta]) => (
               <button
@@ -545,11 +795,11 @@ export default function LenormandPage() {
             ))}
           </div>
 
-          {/* Interpretation — only for flipped cards */}
           <div style={{ width: "100%", maxWidth: 540 }}>
             {drawnCards.filter(card => flippedCards.has(card.id)).map((card) => {
               const i = drawnCards.indexOf(card);
               const isExpanded = expandedCards.has(card.id);
+              const posLabel = activeSpread ? activeSpread.positions[i]?.badge : i + 1;
               return (
                 <div
                   key={card.id}
@@ -571,12 +821,13 @@ export default function LenormandPage() {
                     }}
                   >
                     <span style={{
-                      fontFamily: "'DM Sans', sans-serif",
+                      fontFamily: "'Noto Serif SC', sans-serif",
                       fontSize: 11,
                       color: "var(--accent-dim)",
-                      minWidth: 16,
+                      minWidth: 20,
+                      whiteSpace: "nowrap",
                     }}>
-                      {i + 1}
+                      {posLabel}
                     </span>
                     <span style={{
                       fontFamily: "'Noto Serif SC', serif",
@@ -656,7 +907,7 @@ export default function LenormandPage() {
               重新开始
             </button>
             <button
-              onClick={shuffle}
+              onClick={() => shuffle()}
               style={{
                 fontFamily: "'Noto Serif SC', serif",
                 fontSize: 13,
