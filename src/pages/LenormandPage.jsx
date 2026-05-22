@@ -3,49 +3,8 @@ import { lenormandCards } from "../data/lenormandCards";
 import { spreads, lenormandCategories } from "../data/spreads";
 import CardBack from "../components/CardBack";
 import FlipCard from "../components/FlipCard";
-
-const CARD_W = 140;
-const CARD_H = 210;
-
-function computeAdaptiveScale(spread, tableSize) {
-  if (!spread) return 1;
-  const base = spread.initialScale ?? 1;
-  const pos = spread.positions;
-  let maxScale = base;
-  for (let i = 0; i < pos.length; i++) {
-    for (let j = i + 1; j < pos.length; j++) {
-      const dx = Math.abs(pos[i].cx - pos[j].cx);
-      const dy = Math.abs(pos[i].cy - pos[j].cy);
-      if (dx > 0.02) maxScale = Math.min(maxScale, (dx * tableSize - 8) / CARD_W);
-      if (dy > 0.02) maxScale = Math.min(maxScale, (dy * tableSize - 8) / CARD_H);
-    }
-  }
-  return Math.max(0.3, maxScale);
-}
-
-function computeLayout(cards, spread, tableSize) {
-  const scale = computeAdaptiveScale(spread, tableSize);
-  const positions = {};
-  if (spread) {
-    cards.forEach((card, i) => {
-      const p = spread.positions[i];
-      positions[card.id] = {
-        x: Math.max(0, p.cx * tableSize - (CARD_W * scale) / 2),
-        y: Math.max(0, p.cy * tableSize - (CARD_H * scale) / 2),
-      };
-    });
-  } else {
-    const n = cards.length;
-    const spacing = n > 1 ? Math.min((tableSize - 40 - CARD_W) / (n - 1), 200) : 0;
-    const totalW = (n - 1) * spacing + CARD_W;
-    const startX = Math.max(20, (tableSize - totalW) / 2);
-    const startY = Math.max(20, (tableSize - CARD_H) / 2);
-    cards.forEach((card, i) => {
-      positions[card.id] = { x: startX + i * spacing, y: startY };
-    });
-  }
-  return { positions, scale };
-}
+import { computeLayout } from "../utils/cardLayout";
+import { useCardTable } from "../hooks/useCardTable";
 
 export default function LenormandPage({ spread: spreadProp }) {
   const [phase, setPhase] = useState("welcome");
@@ -54,106 +13,37 @@ export default function LenormandPage({ spread: spreadProp }) {
   const [selected, setSelected] = useState([]);
   const [drawnCards, setDrawnCards] = useState([]);
   const [flippedCards, setFlippedCards] = useState(new Set());
-  const [cardPositions, setCardPositions] = useState({});
-  const [expandedCards, setExpandedCards] = useState(new Set());
-  const [activeCardId, setActiveCardId] = useState(null);
-  const [cardScale, setCardScale] = useState(1);
   const [activeSpread, setActiveSpread] = useState(spreadProp ?? null);
   const [showSpreadModal, setShowSpreadModal] = useState(false);
-  const tableRef = useRef(null);
-  const draggingRef = useRef(null);
 
   const lenormandSpreads = spreads.filter(s => s.deck === "lenormand");
 
+  const flipCard = (cardId) => setFlippedCards(prev => { const next = new Set(prev); next.add(cardId); return next; });
+
+  const {
+    tableRef, cardPositions, setCardPositions, cardScale, setCardScale,
+    expandedCards, activeCardId,
+    initLayout, resetTable,
+    onCardPointerDown, onCardPointerMove, onCardPointerUp,
+    adjustScale, toggleExpanded,
+  } = useCardTable({ flipCard, flippedCards, freeDrawCentered: true });
+
   useEffect(() => {
-    if (phase !== "result" || drawnCards.length === 0 || !tableRef.current) return;
-    const size = tableRef.current.offsetWidth;
-    const { positions, scale } = computeLayout(drawnCards, activeSpread, size);
-    setCardPositions(positions);
-    setCardScale(scale);
+    if (phase !== "result" || drawnCards.length === 0) return;
     setFlippedCards(new Set());
-    setExpandedCards(new Set());
-    setActiveCardId(null);
+    initLayout(drawnCards, activeSpread);
   }, [phase, drawnCards]);
 
   useEffect(() => {
     if (phase !== "result" || drawnCards.length === 0 || !tableRef.current) return;
     const observer = new ResizeObserver(([entry]) => {
-      const size = entry.contentRect.width;
-      const { positions, scale } = computeLayout(drawnCards, activeSpread, size);
+      const { positions, scale } = computeLayout(drawnCards, activeSpread, entry.contentRect.width, { freeDrawCentered: true });
       setCardPositions(positions);
       setCardScale(scale);
     });
     observer.observe(tableRef.current);
     return () => observer.disconnect();
   }, [phase, drawnCards, activeSpread]);
-
-  const onCardPointerDown = (e, cardId) => {
-    e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setActiveCardId(cardId);
-    draggingRef.current = {
-      cardId, startX: e.clientX, startY: e.clientY,
-      startLeft: cardPositions[cardId]?.x ?? 0,
-      startTop: cardPositions[cardId]?.y ?? 0,
-    };
-  };
-
-  const onCardPointerMove = (e) => {
-    if (!draggingRef.current) return;
-    const { cardId, startX, startY, startLeft, startTop } = draggingRef.current;
-    const table = tableRef.current;
-    const pad = 8;
-    const maxX = table ? table.offsetWidth - CARD_W * cardScale - pad : 500;
-    const maxY = table ? table.offsetHeight - CARD_H * cardScale - pad : 500;
-    setCardPositions(prev => ({
-      ...prev,
-      [cardId]: {
-        x: Math.max(pad, Math.min(maxX, startLeft + (e.clientX - startX))),
-        y: Math.max(pad, Math.min(maxY, startTop + (e.clientY - startY))),
-      },
-    }));
-  };
-
-  const onCardPointerUp = (e, cardId) => {
-    if (!draggingRef.current) return;
-    const { startX, startY } = draggingRef.current;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    if (Math.sqrt(dx * dx + dy * dy) < 5 && !flippedCards.has(cardId)) {
-      setFlippedCards(prev => {
-        const next = new Set(prev);
-        next.add(cardId);
-        return next;
-      });
-    }
-    draggingRef.current = null;
-  };
-
-  const adjustScale = (delta) => {
-    const newScale = Math.max(0.5, Math.min(1.5, cardScale + delta));
-    const ratio = newScale / cardScale;
-    const table = tableRef.current;
-    if (table) {
-      const tw = table.offsetWidth, th = table.offsetHeight;
-      const newCardW = CARD_W * newScale, newCardH = CARD_H * newScale;
-      setCardPositions(prev => {
-        const next = {};
-        Object.entries(prev).forEach(([id, pos]) => {
-          const cx = pos.x + (CARD_W * cardScale) / 2;
-          const cy = pos.y + (CARD_H * cardScale) / 2;
-          const nx = tw / 2 + (cx - tw / 2) * ratio;
-          const ny = th / 2 + (cy - th / 2) * ratio;
-          next[id] = {
-            x: Math.max(0, Math.min(tw - newCardW, nx - newCardW / 2)),
-            y: Math.max(0, Math.min(th - newCardH, ny - newCardH / 2)),
-          };
-        });
-        return next;
-      });
-    }
-    setCardScale(newScale);
-  };
 
   const shuffle = useCallback((spreadOverride) => {
     const currentSpread = spreadOverride !== undefined ? spreadOverride : activeSpread;
@@ -215,17 +105,7 @@ export default function LenormandPage({ spread: spreadProp }) {
     setDrawnCards([]);
     setFlippedCards(new Set());
     setShuffledDeck([]);
-    setCardPositions({});
-    setExpandedCards(new Set());
-    setCardScale(1);
-  };
-
-  const toggleExpanded = (cardId) => {
-    setExpandedCards(prev => {
-      const next = new Set(prev);
-      next.has(cardId) ? next.delete(cardId) : next.add(cardId);
-      return next;
-    });
+    resetTable();
   };
 
   return (

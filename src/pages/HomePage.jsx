@@ -3,6 +3,8 @@ import { tarotCards } from "../data/tarotCards";
 import { spreads, tarotCategories } from "../data/spreads";
 import CardBack from "../components/CardBack";
 import FlipCard from "../components/FlipCard";
+import { computeLayout } from "../utils/cardLayout";
+import { useCardTable } from "../hooks/useCardTable";
 
 const DECK_LABELS = {
   major: "大阿尔卡纳",
@@ -12,49 +14,6 @@ const DECK_LABELS = {
   pentacles: "星币",
 };
 
-const CARD_W = 140;
-const CARD_H = 210;
-
-function computeAdaptiveScale(spread, tableSize) {
-  if (!spread) return 1;
-  const base = spread.initialScale ?? 1;
-  const pos = spread.positions;
-  let maxScale = base;
-  for (let i = 0; i < pos.length; i++) {
-    for (let j = i + 1; j < pos.length; j++) {
-      const dx = Math.abs(pos[i].cx - pos[j].cx);
-      const dy = Math.abs(pos[i].cy - pos[j].cy);
-      if (dx > 0.02) maxScale = Math.min(maxScale, (dx * tableSize - 8) / CARD_W);
-      if (dy > 0.02) maxScale = Math.min(maxScale, (dy * tableSize - 8) / CARD_H);
-    }
-  }
-  return Math.max(0.3, maxScale);
-}
-
-function computeLayout(cards, spread, tableSize) {
-  const scale = computeAdaptiveScale(spread, tableSize);
-  const positions = {};
-  if (spread) {
-    cards.forEach((card, i) => {
-      const sPos = spread.positions[i];
-      if (sPos) {
-        positions[card.id] = {
-          x: Math.max(0, sPos.cx * tableSize - (CARD_W * scale) / 2),
-          y: Math.max(0, sPos.cy * tableSize - (CARD_H * scale) / 2),
-        };
-      }
-    });
-  } else {
-    const n = cards.length;
-    const spacing = n > 1 ? Math.min((tableSize - 40 - CARD_W) / (n - 1), 200) : 0;
-    const totalW = (n - 1) * spacing + CARD_W;
-    const startX = Math.max(20, (tableSize - totalW) / 2);
-    cards.forEach((card, i) => {
-      positions[card.id] = { x: startX + i * spacing, y: 35 };
-    });
-  }
-  return { positions, scale };
-}
 
 function MiniSpreadPreview({ positions }) {
   const S = 52;
@@ -90,34 +49,30 @@ export default function HomePage({ onNavigate, spread }) {
   const [reversals, setReversals] = useState({});
   const [flippedCards, setFlippedCards] = useState(new Set());
   const gridRef = useRef(null);
-  const tableRef = useRef(null);
-  const draggingRef = useRef(null);
-  const [cardPositions, setCardPositions] = useState({});
-  const [cardScale, setCardScale] = useState(1);
-  const [expandedCards, setExpandedCards] = useState(new Set());
-  const [activeCardId, setActiveCardId] = useState(null);
   const [subDecks, setSubDecks] = useState({});
   const [currentPickStep, setCurrentPickStep] = useState(0);
   const [splitSelectedCards, setSplitSelectedCards] = useState([]);
 
+  const flipCard = (cardId) => setFlippedCards(prev => { const next = new Set(prev); next.add(cardId); return next; });
+
+  const {
+    tableRef, cardPositions, setCardPositions, cardScale, setCardScale,
+    expandedCards, activeCardId,
+    initLayout, resetTable,
+    onCardPointerDown, onCardPointerMove, onCardPointerUp,
+    adjustScale, toggleExpanded,
+  } = useCardTable({ flipCard, flippedCards });
+
   useEffect(() => {
     if (phase !== "result" || revealedCards.length === 0) return;
-    const tableSize = tableRef.current
-      ? tableRef.current.offsetWidth
-      : Math.min(window.innerWidth - 32, activeSpread ? 540 : 720);
-    const { positions, scale } = computeLayout(revealedCards, activeSpread, tableSize);
-    setCardPositions(positions);
-    setCardScale(scale);
     setFlippedCards(new Set());
-    setExpandedCards(new Set());
-    setActiveCardId(null);
+    initLayout(revealedCards, activeSpread);
   }, [phase]);
 
   useEffect(() => {
     if (phase !== "result" || revealedCards.length === 0 || !tableRef.current) return;
     const observer = new ResizeObserver(([entry]) => {
-      const size = entry.contentRect.width;
-      const { positions, scale } = computeLayout(revealedCards, activeSpread, size);
+      const { positions, scale } = computeLayout(revealedCards, activeSpread, entry.contentRect.width);
       setCardPositions(positions);
       setCardScale(scale);
     });
@@ -128,83 +83,6 @@ export default function HomePage({ onNavigate, spread }) {
   useEffect(() => {
     if (spread) shuffle();
   }, []); // auto-start when entering via SpreadLibraryPage
-
-  const onCardPointerDown = (e, cardId) => {
-    e.preventDefault();
-    e.currentTarget.setPointerCapture(e.pointerId);
-    setActiveCardId(cardId);
-    draggingRef.current = {
-      cardId, startX: e.clientX, startY: e.clientY,
-      startLeft: cardPositions[cardId]?.x ?? 0,
-      startTop: cardPositions[cardId]?.y ?? 0,
-    };
-  };
-
-  const onCardPointerMove = (e) => {
-    if (!draggingRef.current) return;
-    const { cardId, startX, startY, startLeft, startTop } = draggingRef.current;
-    const table = tableRef.current;
-    const cardW = 140 * cardScale;
-    const cardH = 210 * cardScale;
-    const pad = 8;
-    const maxX = table ? table.offsetWidth - cardW - pad : 800;
-    const maxY = table ? table.offsetHeight - cardH - pad : 400;
-    setCardPositions(prev => ({
-      ...prev,
-      [cardId]: {
-        x: Math.max(pad, Math.min(maxX, startLeft + (e.clientX - startX))),
-        y: Math.max(pad, Math.min(maxY, startTop + (e.clientY - startY))),
-      },
-    }));
-  };
-
-  const onCardPointerUp = (e, cardId) => {
-    if (!draggingRef.current) return;
-    const { startX, startY } = draggingRef.current;
-    const dx = e.clientX - startX;
-    const dy = e.clientY - startY;
-    if (Math.sqrt(dx * dx + dy * dy) < 5 && !flippedCards.has(cardId)) {
-      setFlippedCards(prev => {
-        const next = new Set(prev);
-        next.add(cardId);
-        return next;
-      });
-    }
-    draggingRef.current = null;
-  };
-
-  const adjustScale = (delta) => {
-    const newScale = Math.max(0.5, Math.min(1.5, cardScale + delta));
-    const ratio = newScale / cardScale;
-    const table = tableRef.current;
-    if (table) {
-      const tw = table.offsetWidth, th = table.offsetHeight;
-      const newCardW = 140 * newScale, newCardH = 210 * newScale;
-      setCardPositions(prev => {
-        const next = {};
-        Object.entries(prev).forEach(([id, pos]) => {
-          const cx = pos.x + (140 * cardScale) / 2;
-          const cy = pos.y + (210 * cardScale) / 2;
-          const nx = tw / 2 + (cx - tw / 2) * ratio;
-          const ny = th / 2 + (cy - th / 2) * ratio;
-          next[id] = {
-            x: Math.max(0, Math.min(tw - newCardW, nx - newCardW / 2)),
-            y: Math.max(0, Math.min(th - newCardH, ny - newCardH / 2)),
-          };
-        });
-        return next;
-      });
-    }
-    setCardScale(newScale);
-  };
-
-  const toggleExpanded = (cardId) => {
-    setExpandedCards(prev => {
-      const next = new Set(prev);
-      next.has(cardId) ? next.delete(cardId) : next.add(cardId);
-      return next;
-    });
-  };
 
   const shuffle = useCallback((spreadOverride) => {
     const currentSpread = spreadOverride ?? activeSpread;
@@ -291,13 +169,11 @@ export default function HomePage({ onNavigate, spread }) {
     setRevealedCards([]);
     setFlippedCards(new Set());
     setShuffledDeck([]);
-    setCardPositions({});
-    setCardScale(1);
-    setExpandedCards(new Set());
     setActiveSpread(null);
     setSubDecks({});
     setCurrentPickStep(0);
     setSplitSelectedCards([]);
+    resetTable();
   };
 
   return (
