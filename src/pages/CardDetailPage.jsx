@@ -87,21 +87,9 @@ export default function CardDetailPage({ card, onBack }) {
         }} />
 
         {isLenormand ? (
-          /* Lenormand: single meaning section, no reversal */
-          <div style={{ marginBottom: 40 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-              <div style={{ width: 3, height: 20, background: "var(--accent-dim)", borderRadius: 2 }} />
-              <h3 style={{
-                fontFamily: "'Noto Serif SC', serif",
-                fontSize: 16,
-                fontWeight: 400,
-                color: "var(--accent)",
-                letterSpacing: "0.15em",
-              }}>
-                含义
-              </h3>
-            </div>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+          /* Lenormand: keywords + two interpretation systems */
+          <>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 32 }}>
               {card.keywords.map((kw, i) => (
                 <span key={i} style={{
                   fontFamily: "'Noto Serif SC', serif",
@@ -116,16 +104,59 @@ export default function CardDetailPage({ card, onBack }) {
                 </span>
               ))}
             </div>
-            <p style={{
-              fontFamily: "'Noto Serif SC', serif",
-              fontSize: 15,
-              color: "var(--body-text)",
-              lineHeight: 2.2,
-              fontWeight: 300,
-            }}>
-              {card.meaning}
-            </p>
-          </div>
+
+            {card.meaningDe && (
+              <div style={{ marginBottom: 36 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                  <div style={{ width: 3, height: 20, background: "var(--upright)", borderRadius: 2 }} />
+                  <h3 style={{
+                    fontFamily: "'Noto Serif SC', serif",
+                    fontSize: 15,
+                    fontWeight: 400,
+                    color: "var(--upright)",
+                    letterSpacing: "0.15em",
+                  }}>
+                    传统德系
+                  </h3>
+                </div>
+                <p style={{
+                  fontFamily: "'Noto Serif SC', serif",
+                  fontSize: 15,
+                  color: "var(--body-text)",
+                  lineHeight: 2.2,
+                  fontWeight: 300,
+                }}>
+                  {card.meaningDe}
+                </p>
+              </div>
+            )}
+
+            {card.meaningRana && (
+              <div style={{ marginBottom: 40 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
+                  <div style={{ width: 3, height: 20, background: "var(--accent-dim)", borderRadius: 2 }} />
+                  <h3 style={{
+                    fontFamily: "'Noto Serif SC', serif",
+                    fontSize: 15,
+                    fontWeight: 400,
+                    color: "var(--accent)",
+                    letterSpacing: "0.15em",
+                  }}>
+                    Rana 体系
+                  </h3>
+                </div>
+                <p style={{
+                  fontFamily: "'Noto Serif SC', serif",
+                  fontSize: 15,
+                  color: "var(--body-text)",
+                  lineHeight: 2.2,
+                  fontWeight: 300,
+                }}>
+                  {card.meaningRana}
+                </p>
+              </div>
+            )}
+          </>
         ) : (
           /* Tarot: upright + reversed */
           <>

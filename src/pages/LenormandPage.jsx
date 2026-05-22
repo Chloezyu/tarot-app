@@ -798,7 +798,7 @@ export default function LenormandPage({ spread: spreadProp }) {
                   }}
                 >
                   <span style={{
-                    fontFamily: "'Noto Serif SC', sans-serif",
+                    fontFamily: "'Noto Serif SC', serif",
                     fontSize: activeSpread ? 8 : 11,
                     fontWeight: 700,
                     color: "var(--accent-on)",
@@ -854,7 +854,7 @@ export default function LenormandPage({ spread: spreadProp }) {
                     }}
                   >
                     <span style={{
-                      fontFamily: "'Noto Serif SC', sans-serif",
+                      fontFamily: "'Noto Serif SC', serif",
                       fontSize: 11,
                       color: "var(--accent-dim)",
                       minWidth: 20,
