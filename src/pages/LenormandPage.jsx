@@ -6,6 +6,12 @@ import FlipCard from "../components/FlipCard";
 import { computeLayout, CARD_W, CARD_H } from "../utils/cardLayout";
 import { useCardTable } from "../hooks/useCardTable";
 
+function getCoreIndex(spread) {
+  if (!spread) return 0;
+  const idx = spread.positions.findIndex(p => p.badge === "核心");
+  return idx >= 0 ? idx : 0;
+}
+
 export default function LenormandPage({ spread: spreadProp }) {
   const [phase, setPhase] = useState("welcome");
   const [system, setSystem] = useState(36);
@@ -15,6 +21,13 @@ export default function LenormandPage({ spread: spreadProp }) {
   const [flippedCards, setFlippedCards] = useState(new Set());
   const [activeSpread, setActiveSpread] = useState(spreadProp ?? null);
   const [showSpreadModal, setShowSpreadModal] = useState(false);
+  const [includeSignificators, setIncludeSignificators] = useState(true);
+  const [coreCard, setCoreCard] = useState(null);
+  const [showCoreModal, setShowCoreModal] = useState(false);
+
+  useEffect(() => {
+    if (system === 36 && coreCard && coreCard.id > 36) setCoreCard(null);
+  }, [system]);
 
   const lenormandSpreads = spreads.filter(s => s.deck === "lenormand");
 
@@ -52,9 +65,11 @@ export default function LenormandPage({ spread: spreadProp }) {
     setDrawnCards([]);
     setFlippedCards(new Set());
 
-    const pool = system === 36
+    let pool = system === 36
       ? lenormandCards.filter(c => c.id <= 36)
       : lenormandCards;
+    if (!includeSignificators) pool = pool.filter(c => c.id !== 28 && c.id !== 29);
+    if (coreCard) pool = pool.filter(c => c.id !== coreCard.id);
     const deck = [...pool].sort(() => Math.random() - 0.5);
     deck.forEach((card, i) => { card._displayNum = i + 1; });
 
@@ -62,7 +77,7 @@ export default function LenormandPage({ spread: spreadProp }) {
       setShuffledDeck(deck);
       setPhase("selecting");
     }, 1800);
-  }, [system, activeSpread]);
+  }, [system, activeSpread, includeSignificators, coreCard]);
 
   const applySpread = (s) => {
     setActiveSpread(s);
@@ -74,12 +89,20 @@ export default function LenormandPage({ spread: spreadProp }) {
   const toggleCard = (index) => {
     if (phase !== "selecting") return;
     if (activeSpread) {
-      if (selected.includes(index) || selected.length >= activeSpread.cardCount) return;
+      const neededCount = activeSpread.cardCount - (coreCard ? 1 : 0);
+      if (selected.includes(index) || selected.length >= neededCount) return;
       const next = [...selected, index];
       setSelected(next);
-      if (next.length === activeSpread.cardCount) {
+      if (next.length === neededCount) {
         setTimeout(() => {
-          setDrawnCards(next.map(i => shuffledDeck[i]));
+          const picked = next.map(i => shuffledDeck[i]);
+          if (coreCard) {
+            const drawn = [...picked];
+            drawn.splice(getCoreIndex(activeSpread), 0, coreCard);
+            setDrawnCards(drawn);
+          } else {
+            setDrawnCards(picked);
+          }
           setPhase("result");
         }, 200);
       }
@@ -94,10 +117,17 @@ export default function LenormandPage({ spread: spreadProp }) {
 
   const revealCards = () => {
     if (selected.length === 0) return;
-    const cards = selected.map(i => shuffledDeck[i]);
-    setDrawnCards(cards);
+    const picked = selected.map(i => shuffledDeck[i]);
+    setDrawnCards(coreCard ? [coreCard, ...picked] : picked);
     setPhase("result");
   };
+
+  // Derived values for selecting phase display
+  const spreadCoreIdx = activeSpread ? getCoreIndex(activeSpread) : 0;
+  const spreadSelectableCount = activeSpread ? activeSpread.cardCount - (coreCard ? 1 : 0) : 0;
+  const spreadDisplayPosIdx = activeSpread && coreCard
+    ? (selected.length < spreadCoreIdx ? selected.length : selected.length + 1)
+    : selected.length;
 
   const reset = () => {
     setPhase("welcome");
@@ -233,6 +263,128 @@ export default function LenormandPage({ spread: spreadProp }) {
         </div>
       )}
 
+      {/* Core Card Picker Modal */}
+      {showCoreModal && (
+        <div
+          onClick={() => setShowCoreModal(false)}
+          style={{
+            position: "fixed", inset: 0,
+            background: "rgba(0,0,0,0.6)",
+            zIndex: 100,
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "center",
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: "100%",
+              maxWidth: 500,
+              maxHeight: "80vh",
+              background: "var(--bg-body)",
+              border: "1px solid var(--surface-border)",
+              borderRadius: "12px 12px 0 0",
+              overflowY: "auto",
+              padding: "20px 20px 40px",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+              <span style={{
+                fontFamily: "'Noto Serif SC', serif",
+                fontSize: 14,
+                color: "var(--text)",
+                letterSpacing: "0.15em",
+              }}>
+                选择核心牌
+              </span>
+              <button
+                onClick={() => setShowCoreModal(false)}
+                style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 18,
+                  color: "var(--text-faint)",
+                  background: "transparent",
+                  border: "none",
+                  cursor: "pointer",
+                  lineHeight: 1,
+                  padding: 4,
+                }}
+              >×</button>
+            </div>
+            <p style={{
+              fontFamily: "'Noto Serif SC', serif",
+              fontSize: 12,
+              color: "var(--text-faint)",
+              fontWeight: 300,
+              marginBottom: 16,
+            }}>
+              核心牌固定于牌阵核心位置，不参与随机抽取
+            </p>
+
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(68px, 1fr))",
+              gap: 8,
+              marginBottom: 16,
+            }}>
+              {(system === 36 ? lenormandCards.filter(c => c.id <= 36) : lenormandCards).map(card => (
+                <div
+                  key={card.id}
+                  onClick={() => { setCoreCard(card); setShowCoreModal(false); }}
+                  style={{
+                    border: coreCard?.id === card.id
+                      ? "2px solid var(--accent)"
+                      : "1px solid var(--surface-border)",
+                    borderRadius: 4,
+                    overflow: "hidden",
+                    cursor: "pointer",
+                    background: coreCard?.id === card.id ? "var(--accent-bg)" : "transparent",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <img
+                    src={card.image}
+                    alt={card.name}
+                    style={{ width: "100%", display: "block", aspectRatio: "2/3", objectFit: "cover" }}
+                  />
+                  <div style={{
+                    padding: "4px 2px",
+                    fontFamily: "'Noto Serif SC', serif",
+                    fontSize: 10,
+                    color: coreCard?.id === card.id ? "var(--accent)" : "var(--text-sub)",
+                    textAlign: "center",
+                    letterSpacing: "0.05em",
+                  }}>
+                    {card.name}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {coreCard && (
+              <button
+                onClick={() => { setCoreCard(null); setShowCoreModal(false); }}
+                style={{
+                  width: "100%",
+                  fontFamily: "'Noto Serif SC', serif",
+                  fontSize: 13,
+                  color: "var(--text-sub)",
+                  background: "transparent",
+                  border: "1px solid var(--surface-border)",
+                  padding: "12px",
+                  cursor: "pointer",
+                  borderRadius: 4,
+                  letterSpacing: "0.1em",
+                }}
+              >
+                清除核心牌
+              </button>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Welcome Phase */}
       {phase === "welcome" && (
         <div style={{
@@ -316,6 +468,125 @@ export default function LenormandPage({ spread: spreadProp }) {
                 </button>
               ))}
             </div>
+          </div>
+
+          <div style={{ marginBottom: 36 }}>
+            <p style={{
+              fontFamily: "'Noto Serif SC', serif",
+              fontSize: 11,
+              color: "var(--text-faint)",
+              letterSpacing: "0.2em",
+              marginBottom: 12,
+            }}>
+              核心牌
+            </p>
+            {coreCard ? (
+              <div
+                onClick={() => setShowCoreModal(true)}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: "8px 16px 8px 8px",
+                  background: "var(--accent-bg)",
+                  border: "1px solid var(--accent-border)",
+                  borderRadius: 20,
+                  cursor: "pointer",
+                }}
+              >
+                <img
+                  src={coreCard.image}
+                  alt={coreCard.name}
+                  style={{ width: 24, height: 36, borderRadius: 2, objectFit: "cover" }}
+                />
+                <span style={{
+                  fontFamily: "'Noto Serif SC', serif",
+                  fontSize: 13,
+                  color: "var(--accent)",
+                  letterSpacing: "0.1em",
+                }}>
+                  {coreCard.name}
+                </span>
+                <span style={{
+                  fontFamily: "'Cormorant Garamond', serif",
+                  fontSize: 12,
+                  color: "var(--text-dim)",
+                  fontStyle: "italic",
+                }}>
+                  {coreCard.nameEn}
+                </span>
+                <button
+                  onClick={e => { e.stopPropagation(); setCoreCard(null); }}
+                  style={{
+                    marginLeft: 4,
+                    fontFamily: "'DM Sans', sans-serif",
+                    fontSize: 14,
+                    color: "var(--text-faint)",
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: 0,
+                    lineHeight: 1,
+                  }}
+                >×</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowCoreModal(true)}
+                style={{
+                  fontFamily: "'Noto Serif SC', serif",
+                  fontSize: 13,
+                  color: "var(--text-sub)",
+                  background: "transparent",
+                  border: "1px solid var(--filter-border)",
+                  padding: "10px 28px",
+                  cursor: "pointer",
+                  borderRadius: 20,
+                  transition: "all 0.3s",
+                  letterSpacing: "0.05em",
+                }}
+              >
+                + 设置核心牌
+              </button>
+            )}
+          </div>
+
+          <div style={{ marginBottom: 36 }}>
+            <p style={{
+              fontFamily: "'Noto Serif SC', serif",
+              fontSize: 11,
+              color: "var(--text-faint)",
+              letterSpacing: "0.2em",
+              marginBottom: 12,
+            }}>
+              人物指示牌
+            </p>
+            <button
+              onClick={() => setIncludeSignificators(v => !v)}
+              style={{
+                fontFamily: "'Noto Serif SC', serif",
+                fontSize: 13,
+                color: includeSignificators ? "var(--accent)" : "var(--text-sub)",
+                background: includeSignificators ? "var(--accent-bg)" : "transparent",
+                border: includeSignificators ? "1px solid var(--accent-border)" : "1px solid var(--filter-border)",
+                padding: "10px 28px",
+                cursor: "pointer",
+                borderRadius: 20,
+                transition: "all 0.3s",
+                letterSpacing: "0.05em",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span style={{
+                width: 8, height: 8, borderRadius: "50%",
+                background: includeSignificators ? "var(--accent)" : "var(--text-faint)",
+                flexShrink: 0,
+                transition: "background 0.3s",
+              }} />
+              {includeSignificators ? "已启用" : "已禁用"}
+            </button>
           </div>
 
           <button
@@ -403,9 +674,9 @@ export default function LenormandPage({ spread: spreadProp }) {
                 marginBottom: 6,
                 fontWeight: 300,
               }}>
-                第 {selected.length + 1} 张 / {activeSpread.cardCount}
+                第 {selected.length + 1} 张 / {spreadSelectableCount}
                 {" · "}
-                <span style={{ color: "var(--accent)" }}>{activeSpread.positions[selected.length]?.badge}</span>
+                <span style={{ color: "var(--accent)" }}>{activeSpread.positions[spreadDisplayPosIdx]?.badge}</span>
               </p>
               <p style={{
                 fontFamily: "'Noto Serif SC', serif",
@@ -415,7 +686,7 @@ export default function LenormandPage({ spread: spreadProp }) {
                 marginBottom: 28,
                 fontWeight: 300,
               }}>
-                {activeSpread.positions[selected.length]?.label}
+                {activeSpread.positions[spreadDisplayPosIdx]?.label}
               </p>
             </>
           ) : (
@@ -657,7 +928,9 @@ export default function LenormandPage({ spread: spreadProp }) {
             {drawnCards.map((card, i) => {
               if (flippedCards.has(card.id)) return null;
               const pos = cardPositions[card.id] ?? { x: 20 + i * 160, y: 35 };
-              const badge = activeSpread ? activeSpread.positions[i]?.badge : i + 1;
+              const badge = activeSpread
+                ? activeSpread.positions[i]?.badge
+                : (coreCard && i === 0 ? "核心" : (coreCard ? i : i + 1));
               return (
                 <div
                   key={`badge-${card.id}`}
