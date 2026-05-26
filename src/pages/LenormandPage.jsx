@@ -3,7 +3,7 @@ import { lenormandCards } from "../data/lenormandCards";
 import { spreads, lenormandCategories } from "../data/spreads";
 import CardBack from "../components/CardBack";
 import FlipCard from "../components/FlipCard";
-import { computeLayout } from "../utils/cardLayout";
+import { computeLayout, CARD_W, CARD_H } from "../utils/cardLayout";
 import { useCardTable } from "../hooks/useCardTable";
 
 export default function LenormandPage({ spread: spreadProp }) {
