@@ -706,16 +706,5 @@ const _suitCn = { wands:"权杖", cups:"圣杯", swords:"宝剑", pentacles:"星
 const _courtTitle = { "侍从":"侍从", "骑士":"骑士", "王后":"皇后", "国王":"皇帝" };
 
 tarotCards.forEach(card => {
-  if (card.category === "major") {
-    card.image = `/cards/Tarot-${card.id}${_majorNames[card.id]}.jpg`;
-  } else {
-    const suit = _suitCn[card.suit];
-    if (card.number === "A") {
-      card.image = `/cards/Tarot-${suit}1皇牌.jpg`;
-    } else if (_courtTitle[card.number]) {
-      card.image = `/cards/Tarot-${suit}${_courtTitle[card.number]}.jpg`;
-    } else {
-      card.image = `/cards/Tarot-${suit}${card.number}.jpg`;
-    }
-  }
+  card.image = `/cards/${card.id}.jpg`;
 });
