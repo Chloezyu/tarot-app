@@ -25,7 +25,7 @@ export default function FlipCard({ card, flipped, delay = 0, isReversed }) {
         transform: showFlip ? "rotateY(180deg)" : "rotateY(0deg)",
       }}>
         <div style={{ position: "absolute", width: "100%", height: "100%", backfaceVisibility: "hidden" }}>
-          <CardBack number={card._displayNum} small={false} />
+          <CardBack number={card.displayNum ?? card._displayNum} small={false} />
         </div>
         <div style={{
           position: "absolute",
