@@ -4,6 +4,7 @@ import { spreads, lenormandCategories } from "../data/spreads";
 import CardBack from "../components/CardBack";
 import FlipCard from "../components/FlipCard";
 import { computeLayout, CARD_W, CARD_H } from "../utils/cardLayout";
+import { shuffleWithDisplayNumbers } from "../utils/deck";
 import { useCardTable } from "../hooks/useCardTable";
 
 function getCoreIndex(spread) {
@@ -70,8 +71,7 @@ export default function LenormandPage({ spread: spreadProp }) {
       : lenormandCards;
     if (!includeSignificators) pool = pool.filter(c => c.id !== 28 && c.id !== 29);
     if (coreCard) pool = pool.filter(c => c.id !== coreCard.id);
-    const deck = [...pool].sort(() => Math.random() - 0.5);
-    deck.forEach((card, i) => { card._displayNum = i + 1; });
+    const deck = shuffleWithDisplayNumbers(pool);
 
     setTimeout(() => {
       setShuffledDeck(deck);
@@ -883,8 +883,8 @@ export default function LenormandPage({ spread: spreadProp }) {
             style={{
               position: "relative",
               width: "100%",
-              maxWidth: 540,
-              aspectRatio: "1 / 1",
+              maxWidth: 600,
+              aspectRatio: "4 / 5",
               background: "var(--surface)",
               border: "1px solid var(--surface-border)",
               borderRadius: 12,

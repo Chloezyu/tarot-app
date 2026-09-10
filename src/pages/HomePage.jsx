@@ -4,6 +4,7 @@ import { spreads, tarotCategories } from "../data/spreads";
 import CardBack from "../components/CardBack";
 import FlipCard from "../components/FlipCard";
 import { computeLayout } from "../utils/cardLayout";
+import { shuffleWithDisplayNumbers } from "../utils/deck";
 import { useCardTable } from "../hooks/useCardTable";
 
 const DECK_LABELS = {
@@ -101,10 +102,8 @@ export default function HomePage({ onNavigate, spread }) {
       const decks = {};
       ["major", "wands", "cups", "swords", "pentacles"].forEach(type => {
         const pool = tarotCards
-          .filter(c => type === "major" ? c.category === "major" : c.suit === type)
-          .sort(() => Math.random() - 0.5);
-        pool.forEach((card, i) => { card._displayNum = i + 1; });
-        decks[type] = pool;
+          .filter(c => type === "major" ? c.category === "major" : c.suit === type);
+        decks[type] = shuffleWithDisplayNumbers(pool);
       });
       setTimeout(() => {
         setSubDecks(decks);
@@ -113,8 +112,7 @@ export default function HomePage({ onNavigate, spread }) {
       return;
     }
 
-    const deck = [...tarotCards].sort(() => Math.random() - 0.5);
-    deck.forEach((card, i) => { card._displayNum = i + 1; });
+    const deck = shuffleWithDisplayNumbers(tarotCards);
     setTimeout(() => {
       setShuffledDeck(deck);
       setPhase("selecting");
@@ -588,8 +586,8 @@ export default function HomePage({ onNavigate, spread }) {
             style={{
               position: "relative",
               width: "100%",
-              maxWidth: activeSpread ? 540 : 720,
-              ...(activeSpread ? { aspectRatio: "1/1" } : { height: 280 }),
+              maxWidth: activeSpread ? 600 : 720,
+              ...(activeSpread ? { aspectRatio: "4/5" } : { height: 520 }),
               background: "var(--surface)",
               border: "1px solid var(--surface-border)",
               borderRadius: 12,
